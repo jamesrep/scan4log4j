@@ -1,3 +1,4 @@
+Host
 User-Agent
 Referer
 X-Api-Version
