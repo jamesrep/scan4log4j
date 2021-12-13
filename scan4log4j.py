@@ -20,6 +20,7 @@ def scan(url, payloads, headers, split_headers, bPayloadInURL):
     print("[+] Testing url ", url)
 
     for payload in payloads:
+        
         if split_headers:
             for header in headers:
                 send_request(url, payload, [header])
@@ -31,18 +32,24 @@ def scan(url, payloads, headers, split_headers, bPayloadInURL):
             send_request(strURL, payload, headers)
 
 
-def send_request(url, payload, headers):
+def send_request(url, payload, all_headers):
     all_headers = default_headers.copy()
-
-    for header in headers:
+    for header in all_headers:
         all_headers[header] = payload
-        print('[+] Evaluating header: ', header)
 
+    # Make it easier to create lists...
     if(url.find("http") != 0):
-        url = "http://{0}/".format(url)
+        if(url.find(":443") > 0):
+            url = "https://{0}/".format(url)
+        else:
+            url = "http://{0}/".format(url)
 
     print('[+] Request send to {0} with payload {1}'.format(url , payload))
-    resp = requests.get(url, headers=all_headers, allow_redirects=True, timeout=4)
+
+    try:
+        resp = requests.get(url, headers=all_headers, allow_redirects=True, timeout=4)
+    except Exception as e:
+        print("[-] Exception on request", str(e))
 
     if(resp == None):
         print("[-] No response from ", url)
