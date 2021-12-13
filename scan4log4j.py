@@ -47,7 +47,7 @@ def send_request(url, payload, all_headers):
     print('[+] Request send to {0} with payload {1}'.format(url , payload))
 
     try:
-        resp = requests.get(url, headers=all_headers, allow_redirects=True, timeout=4)
+        resp = requests.get(url, headers=all_headers, allow_redirects=True, timeout=4, verify=False)
     except Exception as e:
         print("[-] Exception on request", str(e))
 
@@ -68,6 +68,7 @@ def main():
     parser = argparse.ArgumentParser(description="Execute simple log4shell-scan")
     parser.add_argument("--urllist", help="Comma separated list of urls", type=str, required=False)
     parser.add_argument("--urls", help="File with a list of urls ", type=str, required=False, default='urls.txt')
+    parser.add_argument("--directpayload", help="Specify the payload instead of reading it from a file ", type=str, required=False)
     parser.add_argument("--headers", help="List of headers ", type=str, required=False, default='headers.txt')
     parser.add_argument("--poolcount", help="Nr of tasks in pool ", type=int, required=False, default=60)
     parser.add_argument("--payloads", help="List of payloads ", type=str, required=False, default='payloads.txt')
@@ -86,26 +87,26 @@ def main():
         strUrls = getPath(args.urls)
         get_urls = open(strUrls, 'r').readlines()
 
-    strPayloads = getPath(args.payloads)
-    strHeaders = getPath(args.headers)
 
-    
-    get_payloads = open(strPayloads, 'r').readlines()
+    if(args.directpayload != None):
+        payloads.append(args.directpayload )
+    else:    
+        strPayloads = getPath(args.payloads)
+        get_payloads = open(strPayloads, 'r').readlines()
+        for payload in get_payloads:
+            payloads.append(payload.strip())
+
+    strHeaders = getPath(args.headers)    
     get_headers = open(strHeaders, 'r').readlines()
 
     for url in get_urls:
         strUrl = url.strip()
         if(strUrl.find('#') == 0 or len(strUrl) < 1):
             continue
-
         urls.append(strUrl)
-
-    for payload in get_payloads:
-        payloads.append(payload.strip())
 
     for header in get_headers:
         headers.append(header.strip())
-
     
     executor = concurrent.futures.ProcessPoolExecutor(min(len(urls),min(MAX_POOL, args.poolcount)))
     futures = [executor.submit(scan, url, payloads, headers, args.splitheaders, args.payloadinurl) for url in urls]
