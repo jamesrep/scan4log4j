@@ -42,7 +42,12 @@ def send_request(url, payload, headers):
         url = "http://{0}/".format(url)
 
     print('[+] Request send to {0} with payload {1}'.format(url , payload))
-    requests.get(url, headers=all_headers, allow_redirects=True, timeout=4)
+    resp = requests.get(url, headers=all_headers, allow_redirects=True, timeout=4)
+
+    if(resp == None):
+        print("[-] No response from ", url)
+    #else:
+    #    print(resp.status_code, " - ", resp.text[:30].replace('\r', ' ').replace('\n', ' '))
     
 
 def getPath(strFile):
@@ -54,7 +59,8 @@ def getPath(strFile):
 
 def main():    
     parser = argparse.ArgumentParser(description="Execute simple log4shell-scan")
-    parser.add_argument("--urls", help="List of urls ", type=str, required=False, default='urls.txt')
+    parser.add_argument("--urllist", help="Comma separated list of urls", type=str, required=False)
+    parser.add_argument("--urls", help="File with a list of urls ", type=str, required=False, default='urls.txt')
     parser.add_argument("--headers", help="List of headers ", type=str, required=False, default='headers.txt')
     parser.add_argument("--poolcount", help="Nr of tasks in pool ", type=int, required=False, default=60)
     parser.add_argument("--payloads", help="List of payloads ", type=str, required=False, default='payloads.txt')
@@ -67,11 +73,16 @@ def main():
     payloads = []
     headers = []
 
-    strUrls = getPath(args.urls)
+    if(args.urllist != None):
+        get_urls = args.urllist.split(',')
+    else:
+        strUrls = getPath(args.urls)
+        get_urls = open(strUrls, 'r').readlines()
+
     strPayloads = getPath(args.payloads)
     strHeaders = getPath(args.headers)
 
-    get_urls = open(strUrls, 'r').readlines()
+    
     get_payloads = open(strPayloads, 'r').readlines()
     get_headers = open(strHeaders, 'r').readlines()
 
